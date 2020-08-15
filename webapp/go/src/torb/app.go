@@ -95,14 +95,25 @@ func sessUserID(c echo.Context) int64 {
 	return userID
 }
 
-func sessSetUserID(c echo.Context, id int64) {
+func sessNickname(c echo.Context) string {
+	sess, _ := session.Get("session", c)
+	var nickName string
+	if x, ok := sess.Values["nickname"]; ok {
+		nickName, _ = x.(string)
+	}
+	return nickName
+}
+
+func sessSetUser(c echo.Context, user *User) {
 	sess, _ := session.Get("session", c)
 	sess.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   3600,
 		HttpOnly: true,
 	}
-	sess.Values["user_id"] = id
+	sess.Values["user_id"] = user.ID
+	sess.Values["nickname"] = user.Nickname
+	sess.Values["login_name"] = user.LoginName
 	sess.Save(c.Request(), c.Response())
 }
 
@@ -114,6 +125,8 @@ func sessDeleteUserID(c echo.Context) {
 		HttpOnly: true,
 	}
 	delete(sess.Values, "user_id")
+	delete(sess.Values, "nickname")
+	delete(sess.Values, "login_name")
 	sess.Save(c.Request(), c.Response())
 }
 
@@ -172,8 +185,9 @@ func getLoginUser(c echo.Context) (*User, error) {
 		return nil, errors.New("not logged in")
 	}
 	var user User
-	err := db.QueryRow("SELECT id, nickname FROM users WHERE id = ?", userID).Scan(&user.ID, &user.Nickname)
-	return &user, err
+	user.ID = userID
+	user.Nickname = sessNickname(c)
+	return &user, nil
 }
 
 func getLoginAdministrator(c echo.Context) (*Administrator, error) {
@@ -707,7 +721,7 @@ func main() {
 			return resError(c, "authentication_failed", 401)
 		}
 
-		sessSetUserID(c, user.ID)
+		sessSetUser(c, user)
 		user, err = getLoginUser(c)
 		if err != nil {
 			return err
