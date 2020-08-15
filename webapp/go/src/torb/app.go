@@ -336,7 +336,7 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Output: os.Stderr}))
 	e.Static("/", "public")
 	e.GET("/", func(c echo.Context) error {
-		fmt.Println("ok!");
+		fmt.Println("ok!")
 		events, err := getEvents(false)
 		if err != nil {
 			return err
@@ -347,7 +347,7 @@ func main() {
 		return c.Render(200, "index.tmpl", echo.Map{
 			"events": events,
 			"user":   c.Get("user"),
-			"origin": "",
+			"origin": c.Scheme() + "://" + c.Request().Host,
 		})
 	}, fillinUser)
 	e.GET("/initialize", func(c echo.Context) error {
@@ -703,7 +703,7 @@ func main() {
 		return c.Render(200, "admin.tmpl", echo.Map{
 			"events":        events,
 			"administrator": administrator,
-			"origin":        "",
+			"origin":        c.Scheme() + "://" + c.Request().Host,
 		})
 	}, fillinAdministrator)
 	e.POST("/admin/api/actions/login", func(c echo.Context) error {
