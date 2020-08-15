@@ -249,6 +249,30 @@ func getSheetInfo(sheetId int64) (rank string, num int64, price int64, err error
 	}
 }
 
+func getEventList(eventIDs []int64) (map[int64]*Event, error) {
+	if len(eventIDs) == 0 {
+		return nil, errors.New("event ids length == 0")
+	}
+	args := make([]interface{}, len(eventIDs))
+	for i, id := range eventIDs {
+		args[i] = id
+	}
+	rows, err := db.Query("SELECT * FROM events WHERE id IN (?" + strings.Repeat(",?", len(eventIDs) - 1) + ")", args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	events := make(map[int64]*Event)
+	for rows.Next() {
+		var event Event
+		rows.Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
+		events[event.ID] = &event
+	}
+
+	return events, err
+}
+
 func getEvent(eventID int64) (*Event, error) {
 	var event Event
 	err := db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
@@ -258,6 +282,8 @@ func getEvent(eventID int64) (*Event, error) {
 		return &event, err
 	}
 }
+
+
 
 func getEventDetailWithoutSheetDetail(eventID, loginUserID int64) (*Event, error) {
 	var event Event
@@ -589,43 +615,69 @@ func main() {
 			return resError(c, "forbidden", 403)
 		}
 
-		rows, err := db.Query("SELECT r.*, s.rank AS sheet_rank, s.num AS sheet_num, s.id AS sheed_id FROM reservations r INNER JOIN sheets s ON s.id = r.sheet_id WHERE r.user_id = ? ORDER BY IFNULL(r.canceled_at, r.reserved_at) DESC LIMIT 5", user.ID)
+		rows, err := db.Query("SELECT * FROM reservations WHERE user_id = ? ORDER BY IFNULL(canceled_at, reserved_at) DESC LIMIT 5", user.ID)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
 
 		var recentReservations []Reservation
+		var eventIds []int64
 		for rows.Next() {
 			var reservation Reservation
 			var sheet Sheet
-			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt, &reservation.CanceledAt, &sheet.Rank, &sheet.Num, &sheet.ID); err != nil {
+			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt, &reservation.CanceledAt); err != nil {
 				return err
 			}
-
-			event, err := getEvent(reservation.EventID)
+			sheet.Rank, sheet.Num, sheet.Price, err  = getSheetInfo(reservation.SheetID)
 			if err != nil {
 				return err
 			}
-			_, _, sheetPrice, err := getSheetInfo(sheet.ID)
-			if err != nil {
-				return nil
-			}
-			price := event.Price + sheetPrice
-			event.Sheets = nil
-			event.Total = 0
-			event.Remains = 0
 
-			reservation.Event = event
+			eventIds = append(eventIds, reservation.EventID)
+			//
+			//event, err := getEventList([]int64{reservation.EventID})
+			//if err != nil {
+			//	return err
+			//}
+			//
+			//_, _, sheetPrice, err := getSheetInfo(sheet.ID)
+			//if err != nil {
+			//	return nil
+			//}
+			//price := event.Price + sheetPrice
+			//event.Sheets = nil
+			//event.Total = 0
+			//event.Remains = 0
+			//
+			//reservation.Event = event
 			reservation.SheetRank = sheet.Rank
 			reservation.SheetNum = sheet.Num
-			reservation.Price = price
+			//reservation.Price = price
 			reservation.ReservedAtUnix = reservation.ReservedAt.Unix()
 			if reservation.CanceledAt != nil {
 				reservation.CanceledAtUnix = reservation.CanceledAt.Unix()
 			}
 			recentReservations = append(recentReservations, reservation)
 		}
+
+		eventList, err := getEventList(eventIds)
+
+		if err == nil {
+			for i, reservation := range recentReservations {
+				recentReservations[i].Event = eventList[reservation.EventID]
+				_, _, sheetPrice, err := getSheetInfo(reservation.SheetID)
+				if err != nil {
+					return nil
+				}
+				price := recentReservations[i].Event.Price + sheetPrice
+				recentReservations[i].Event.Sheets = nil
+				recentReservations[i].Event.Total = 0
+				recentReservations[i].Event.Remains = 0
+				recentReservations[i].Price = price
+			}
+		}
+
 		if recentReservations == nil {
 			recentReservations = make([]Reservation, 0)
 		}
@@ -636,6 +688,7 @@ func main() {
 		if err != nil {
 			return err
 		}
+		defer rows.Close()
 		for rows.Next() {
 			var price int64
 			var sheetId int64
