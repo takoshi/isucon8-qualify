@@ -211,12 +211,9 @@ func getEvents(all bool) ([]*Event, error) {
 		events = append(events, &event)
 	}
 	for i, v := range events {
-		event, err := getEventDetail(v.ID, -1)
+		event, err := getEventDetailWithoutSheetDetail(v.ID, -1)
 		if err != nil {
 			return nil, err
-		}
-		for k := range event.Sheets {
-			event.Sheets[k].Detail = nil
 		}
 		events[i] = event
 	}
@@ -245,6 +242,64 @@ func getEvent(eventID int64) (*Event, error) {
 	} else {
 		return &event, err
 	}
+}
+
+func getEventDetailWithoutSheetDetail(eventID, loginUserID int64) (*Event, error) {
+	var event Event
+	if err := db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
+		return nil, err
+	}
+	event.Sheets = map[string]*Sheets{
+		"S": &Sheets{},
+		"A": &Sheets{},
+		"B": &Sheets{},
+		"C": &Sheets{},
+	}
+
+	rows, err := db.Query("SELECT event_id, sheet_id, user_id, reserved_at FROM reservations WHERE event_id = ? AND canceled_at IS NULL", event.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	reservedMap := make(map[int64]bool)
+	for rows.Next() {
+		var reservation Reservation
+		err = rows.Scan(&reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		rank, _, price, err := getSheetInfo(reservation.SheetID)
+		if err != nil {
+			return nil, err
+		}
+
+		event.Sheets[rank].Price = event.Price + price
+		event.Total++
+		event.Sheets[rank].Total++
+
+		reservedMap[reservation.SheetID] = true
+	}
+
+	for sheetId := 1; sheetId <= 1000; sheetId++ {
+		if reservedMap[int64(sheetId)] {
+			continue
+		}
+		rank, _, price, err := getSheetInfo(int64(sheetId))
+		if err != nil {
+			return nil, err
+		}
+
+		event.Sheets[rank].Price = event.Price + price
+		event.Total++
+		event.Sheets[rank].Total++
+
+		event.Remains++
+		event.Sheets[rank].Remains++
+	}
+
+	return &event, nil
 }
 
 func getEventDetail(eventID, loginUserID int64) (*Event, error) {
