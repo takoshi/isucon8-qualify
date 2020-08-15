@@ -402,6 +402,13 @@ func main() {
 		os.Getenv("DB_DATABASE"),
 	)
 
+	println(os.Getenv("DB_USER"))
+	println(os.Getenv("DB_PASS"))
+	println(os.Getenv("DB_HOST"))
+	println(os.Getenv("DB_PORT"))
+	println(os.Getenv("DB_DATABASE"))
+
+
 	var err error
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
