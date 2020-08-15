@@ -718,7 +718,7 @@ func main() {
 			return err
 		}
 
-		event, err := getEventDetail(eventID, user.ID)
+		event, err := getEvent(eventID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return resError(c, "invalid_event", 404)
