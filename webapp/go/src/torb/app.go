@@ -336,6 +336,7 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Output: os.Stderr}))
 	e.Static("/", "public")
 	e.GET("/", func(c echo.Context) error {
+		fmt.Println("ok!");
 		events, err := getEvents(false)
 		if err != nil {
 			return err
