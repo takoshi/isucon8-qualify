@@ -319,6 +319,12 @@ func getEvent(eventID, loginUserID int64) (*Event, error) {
 		event.Sheets[sheet.Rank].Detail = append(event.Sheets[sheet.Rank].Detail, &sheet)
 	}
 
+	for _, rank := range []string{"S", "A", "B", "C"} {
+		sort.Slice(event.Sheets[rank].Detail, func(i, j int) bool {
+			return event.Sheets[rank].Detail[i].ID < event.Sheets[rank].Detail[j].ID
+		})
+	}
+
 	//for rows.Next() {
 	//	var sheet Sheet
 	//	if err := rows.Scan(&sheet.ID, &sheet.Rank, &sheet.Num, &sheet.Price); err != nil {
