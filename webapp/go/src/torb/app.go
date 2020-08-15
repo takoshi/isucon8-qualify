@@ -221,6 +221,20 @@ func getEvents(all bool) ([]*Event, error) {
 	return events, nil
 }
 
+func getSheetInfo(sheetId int64) (rank string, num int64, price int64, err error) {
+	if 1 <= sheetId && sheetId <= 50 {
+		return "S", sheetId, 5000, nil
+	} else if 51 <= sheetId && sheetId <= 200 {
+		return "A", sheetId - 50, 3000, nil
+	} else if 201 <= sheetId && sheetId <= 500 {
+		return "B", sheetId - 200, 1000, nil
+	} else if 501 <= sheetId && sheetId <= 1000 {
+		return "C", sheetId - 500, 0, nil
+	} else {
+		return "D", 0, -1, errors.New("存在しないシートIDが指定されました")
+	}
+}
+
 func getEvent(eventID, loginUserID int64) (*Event, error) {
 	var event Event
 	if err := db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
@@ -233,36 +247,102 @@ func getEvent(eventID, loginUserID int64) (*Event, error) {
 		"C": &Sheets{},
 	}
 
-	rows, err := db.Query("SELECT * FROM sheets ORDER BY `rank`, num")
+	rows, err := db.Query("SELECT event_id, sheet_id, user_id, reserved_at FROM reservations WHERE event_id = ? AND canceled_at IS NULL", event.ID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	reservedMap := make(map[int64]bool)
 	for rows.Next() {
-		var sheet Sheet
-		if err := rows.Scan(&sheet.ID, &sheet.Rank, &sheet.Num, &sheet.Price); err != nil {
-			return nil, err
-		}
-		event.Sheets[sheet.Rank].Price = event.Price + sheet.Price
-		event.Total++
-		event.Sheets[sheet.Rank].Total++
-
 		var reservation Reservation
-		err := db.QueryRow("SELECT event_id, sheet_id, user_id, reserved_at FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL", event.ID, sheet.ID).Scan(&reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt)
-		if err == nil {
-			sheet.Mine = reservation.UserID == loginUserID
-			sheet.Reserved = true
-			sheet.ReservedAtUnix = reservation.ReservedAt.Unix()
-		} else if err == sql.ErrNoRows {
-			event.Remains++
-			event.Sheets[sheet.Rank].Remains++
-		} else {
+		err = rows.Scan(&reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt)
+		if err != nil {
 			return nil, err
 		}
+
+		rank, num, price, err := getSheetInfo(reservation.SheetID)
+		if err != nil {
+			return nil, err
+		}
+
+		event.Sheets[rank].Price = event.Price + price
+		event.Total++
+		event.Sheets[rank].Total++
+
+		sheet := Sheet {
+			ID:             reservation.SheetID,
+			Rank:           rank,
+			Num:            num,
+			Price:          price,
+			Mine:           false,
+			Reserved:       false,
+			ReservedAt:     nil,
+			ReservedAtUnix: 0,
+		}
+
+		sheet.Mine = reservation.UserID == loginUserID
+		sheet.Reserved = true
+		sheet.ReservedAtUnix = reservation.ReservedAt.Unix()
+
+		event.Sheets[sheet.Rank].Detail = append(event.Sheets[sheet.Rank].Detail, &sheet)
+		reservedMap[sheet.ID] = true
+	}
+
+	for sheetId := 1; sheetId <= 1000; sheetId++ {
+		if reservedMap[int64(sheetId)] {
+			continue
+		}
+		rank, num, price, err := getSheetInfo(int64(sheetId))
+		if err != nil {
+			return nil, err
+		}
+
+		sheet := Sheet {
+			ID:             int64(sheetId),
+			Rank:           rank,
+			Num:            num,
+			Price:          price,
+			Mine:           false,
+			Reserved:       false,
+			ReservedAt:     nil,
+			ReservedAtUnix: 0,
+		}
+
+		event.Sheets[rank].Price = event.Price + price
+		event.Total++
+		event.Sheets[rank].Total++
+
+		event.Remains++
+		event.Sheets[sheet.Rank].Remains++
 
 		event.Sheets[sheet.Rank].Detail = append(event.Sheets[sheet.Rank].Detail, &sheet)
 	}
+
+	//for rows.Next() {
+	//	var sheet Sheet
+	//	if err := rows.Scan(&sheet.ID, &sheet.Rank, &sheet.Num, &sheet.Price); err != nil {
+	//		return nil, err
+	//	}
+	//	event.Sheets[sheet.Rank].Price = event.Price + sheet.Price
+	//	event.Total++
+	//	event.Sheets[sheet.Rank].Total++
+	//
+	//	var reservation Reservation
+	//	err := db.QueryRow("SELECT event_id, sheet_id, user_id, reserved_at FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL", event.ID, sheet.ID).Scan(&reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt)
+	//	if err == nil {
+	//		sheet.Mine = reservation.UserID == loginUserID
+	//		sheet.Reserved = true
+	//		sheet.ReservedAtUnix = reservation.ReservedAt.Unix()
+	//	} else if err == sql.ErrNoRows {
+	//		event.Remains++
+	//		event.Sheets[sheet.Rank].Remains++
+	//	} else {
+	//		return nil, err
+	//	}
+	//
+	//	event.Sheets[sheet.Rank].Detail = append(event.Sheets[sheet.Rank].Detail, &sheet)
+	//}
 
 	return &event, nil
 }
