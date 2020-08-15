@@ -2,6 +2,104 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/aws/aws-lambda-go/events",
+			"repository": "https://github.com/aws/aws-lambda-go",
+			"revision": "55dc88be4cdfaaf4bb4d9f65debd8d4310e0a83c",
+			"branch": "master",
+			"path": "/events"
+		},
+		{
+			"importpath": "github.com/aws/aws-lambda-go/lambda",
+			"repository": "https://github.com/aws/aws-lambda-go",
+			"revision": "55dc88be4cdfaaf4bb4d9f65debd8d4310e0a83c",
+			"branch": "master",
+			"path": "/lambda"
+		},
+		{
+			"importpath": "github.com/aws/aws-lambda-go/lambdacontext",
+			"repository": "https://github.com/aws/aws-lambda-go",
+			"revision": "55dc88be4cdfaaf4bb4d9f65debd8d4310e0a83c",
+			"branch": "master",
+			"path": "/lambdacontext"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go-v2/aws",
+			"repository": "https://github.com/aws/aws-sdk-go-v2",
+			"revision": "fc2dec5dd64bff792adb0a86e3652ab65e064413",
+			"branch": "master",
+			"path": "/aws"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go-v2/internal/awsutil",
+			"repository": "https://github.com/aws/aws-sdk-go-v2",
+			"revision": "fc2dec5dd64bff792adb0a86e3652ab65e064413",
+			"branch": "master",
+			"path": "/internal/awsutil"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go-v2/internal/rand",
+			"repository": "https://github.com/aws/aws-sdk-go-v2",
+			"revision": "fc2dec5dd64bff792adb0a86e3652ab65e064413",
+			"branch": "master",
+			"path": "/internal/rand"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go-v2/internal/sdk",
+			"repository": "https://github.com/aws/aws-sdk-go-v2",
+			"revision": "fc2dec5dd64bff792adb0a86e3652ab65e064413",
+			"branch": "master",
+			"path": "/internal/sdk"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go-v2/internal/sync/singleflight",
+			"repository": "https://github.com/aws/aws-sdk-go-v2",
+			"revision": "fc2dec5dd64bff792adb0a86e3652ab65e064413",
+			"branch": "master",
+			"path": "/internal/sync/singleflight"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/aws",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "7f259aa0c647da38f7e8431d2bd79ebf1757ad51",
+			"branch": "master",
+			"path": "/aws"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/aws/request",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "7f259aa0c647da38f7e8431d2bd79ebf1757ad51",
+			"branch": "master",
+			"path": "/aws/request"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/ini",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "7f259aa0c647da38f7e8431d2bd79ebf1757ad51",
+			"branch": "master",
+			"path": "/internal/ini"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/sdkio",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "7f259aa0c647da38f7e8431d2bd79ebf1757ad51",
+			"branch": "master",
+			"path": "/internal/sdkio"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/shareddefaults",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "7f259aa0c647da38f7e8431d2bd79ebf1757ad51",
+			"branch": "master",
+			"path": "/internal/shareddefaults"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/sync/singleflight",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "7f259aa0c647da38f7e8431d2bd79ebf1757ad51",
+			"branch": "master",
+			"path": "/internal/sync/singleflight"
+		},
+		{
 			"importpath": "github.com/dgrijalva/jwt-go",
 			"repository": "https://github.com/dgrijalva/jwt-go",
 			"revision": "0b96aaa707760d6ab28d9b9d1913ff5993328bae",
@@ -89,6 +187,12 @@
 			"importpath": "github.com/mattn/go-isatty",
 			"repository": "https://github.com/mattn/go-isatty",
 			"revision": "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/newrelic/go-agent",
+			"repository": "https://github.com/newrelic/go-agent",
+			"revision": "7b8be5e84d2f994b52fad23bf554af11e57fe807",
 			"branch": "master"
 		},
 		{
