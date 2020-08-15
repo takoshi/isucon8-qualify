@@ -193,23 +193,38 @@ func getEvents(all bool) ([]*Event, error) {
 	}
 	defer tx.Commit()
 
-	rows, err := tx.Query("SELECT * FROM events ORDER BY id ASC")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	var events []*Event
-	for rows.Next() {
-		var event Event
-		if err := rows.Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
+
+	if all {
+		rows, err := tx.Query("SELECT id FROM events ORDER BY id ASC")
+		if err != nil {
 			return nil, err
 		}
-		if !all && !event.PublicFg {
-			continue
+		defer rows.Close()
+
+		for rows.Next() {
+			var event Event
+			if err := rows.Scan(&event.ID); err != nil {
+				return nil, err
+			}
+			events = append(events, &event)
 		}
-		events = append(events, &event)
+	} else {
+		rows, err := tx.Query("SELECT id FROM events WHERE public_fg = true ORDER BY id ASC")
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var event Event
+			if err := rows.Scan(&event.ID); err != nil {
+				return nil, err
+			}
+			events = append(events, &event)
+		}
 	}
+
 	for i, v := range events {
 		event, err := getEventDetailWithoutSheetDetail(v.ID, -1)
 		if err != nil {

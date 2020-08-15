@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS events (
     title       VARCHAR(128)     NOT NULL,
     public_fg   TINYINT(1)       NOT NULL,
     closed_fg   TINYINT(1)       NOT NULL,
-    price       INTEGER UNSIGNED NOT NULL
+    price       INTEGER UNSIGNED NOT NULL,
+    INDEX public_fg (public_fg)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sheets (
