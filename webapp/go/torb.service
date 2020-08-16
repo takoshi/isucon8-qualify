@@ -5,7 +5,7 @@ Description = isucon8 qualifier webapp in go
 WorkingDirectory=/home/isucon/torb/webapp/go
 EnvironmentFile=/home/isucon/torb/webapp/env.sh
 
-ExecStart = /home/isucon/torb/webapp/go/torb
+ExecStart = /home/ec2-user/isucon8-qualify/webapp/go/run_local.sh
 
 Restart   = always
 Type      = simple
