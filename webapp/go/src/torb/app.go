@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/labstack/echo/middleware"
 	"html/template"
 	"io"
 	"log"
@@ -23,6 +24,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/newrelic/go-agent"
+	_ "net/http/pprof"
 )
 
 type User struct {
@@ -496,6 +498,8 @@ func shuffle(data []int64) {
 }
 
 func main() {
+	go http.ListenAndServe(":3000", nil)
+
 	rand.Seed(0)
 
 	_, err := newrelic.NewApplication(
@@ -534,15 +538,14 @@ func main() {
 		templates: template.Must(template.New("").Delims("[[", "]]").Funcs(funcs).ParseGlob("views/*.tmpl")),
 	}
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
-	//e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-	//	Output: os.Stderr,
-	//	Format: "time:${latency_human}\t${method} uri:${uri}\t\n",
-	//}))
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Output: os.Stderr,
+		Format: "time:${latency_human}\t${method} uri:${uri}\t\n",
+	}))
 	e.Static("/", "public")
 	e.GET("/", func(c echo.Context) error {
 		//txn := app.StartTransaction("/", c.Response(), c.Request())
 		//defer txn.End()
-		fmt.Println("ok!")
 		events, err := getEvents(false)
 		if err != nil {
 			return err
