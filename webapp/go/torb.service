@@ -1,8 +1,8 @@
 [Unit]
-Description = hello daemon
+Description = torb service
 
 [Service]
-ExecStart = /home/ec2-user/isucon8-qualify/webapp/go/run_local.sh
+ExecStart = cd /home/ec2-user/isucon8-qualify/webapp/go && ./run_local.sh
 Restart = always
 Type = simple
 
