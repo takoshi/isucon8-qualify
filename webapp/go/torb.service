@@ -1,0 +1,10 @@
+[Unit]
+Description = hello daemon
+
+[Service]
+ExecStart = /home/ec2-user/isucon8-qualify/webapp/go/run_local.sh
+Restart = always
+Type = simple
+
+[Install]
+WantedBy = multi-user.target
