@@ -853,12 +853,7 @@ func main() {
 
 		var reservationID int64
 
-		tx, err := db.Begin()
-		if err != nil {
-			return err
-		}
-
-		rows, err := tx.Query("SELECT sheet_id FROM reservations WHERE event_id = ? AND canceled_at IS NULL FOR UPDATE", event.ID)
+		rows, err := db.Query("SELECT sheet_id FROM reservations WHERE event_id = ? AND canceled_at IS NULL", event.ID)
 		if err != nil {
 			return err
 		}
@@ -891,6 +886,16 @@ func main() {
 
 		for _, sheetId := range availableSheetIdList {
 
+			tx, err := db.Begin()
+			if err != nil {
+				return err
+			}
+
+			if err := tx.QueryRow("SELECT sheet_id FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL FOR UPDATE", event.ID, sheetId).Scan(&sheetId); err == nil {
+				tx.Rollback()
+				continue
+			}
+
 			res, err := tx.Exec("INSERT INTO reservations (event_id, sheet_id, user_id, reserved_at) VALUES (?, ?, ?, ?)", event.ID, sheetId, user.ID, time.Now().UTC().Format("2006-01-02 15:04:05.000000"))
 			if err != nil {
 				tx.Rollback()
@@ -922,7 +927,6 @@ func main() {
 			})
 		}
 
-		tx.Rollback()
 		return resError(c, "sold_out", 409)
 	}, loginRequired)
 	e.DELETE("/api/events/:id/sheets/:rank/:num/reservation", func(c echo.Context) error {
