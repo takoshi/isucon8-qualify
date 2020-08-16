@@ -22,7 +22,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/middleware"
 	"github.com/newrelic/go-agent"
 )
 
@@ -499,7 +498,7 @@ func shuffle(data []int64) {
 func main() {
 	rand.Seed(0)
 
-	app, err := newrelic.NewApplication(
+	_, err := newrelic.NewApplication(
 		newrelic.NewConfig("isucon8", os.Getenv("NEW_RELIC")))
 
 	if err != nil {
@@ -535,11 +534,14 @@ func main() {
 		templates: template.Must(template.New("").Delims("[[", "]]").Funcs(funcs).ParseGlob("views/*.tmpl")),
 	}
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Output: os.Stderr}))
+	//e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+	//	Output: os.Stderr,
+	//	Format: "time:${latency_human}\t${method} uri:${uri}\t\n",
+	//}))
 	e.Static("/", "public")
 	e.GET("/", func(c echo.Context) error {
-		txn := app.StartTransaction("/", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/", c.Response(), c.Request())
+		//defer txn.End()
 		fmt.Println("ok!")
 		events, err := getEvents(false)
 		if err != nil {
@@ -555,8 +557,8 @@ func main() {
 		})
 	}, fillinUser)
 	e.GET("/initialize", func(c echo.Context) error {
-		txn := app.StartTransaction("/initialize", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/initialize", c.Response(), c.Request())
+		//defer txn.End()
 		cmd := exec.Command("../../db/init.sh")
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -568,8 +570,8 @@ func main() {
 		return c.NoContent(204)
 	})
 	e.POST("/api/users", func(c echo.Context) error {
-		txn := app.StartTransaction("/api/users", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/api/users", c.Response(), c.Request())
+		//defer txn.End()
 		var params struct {
 			Nickname  string `json:"nickname"`
 			LoginName string `json:"login_name"`
@@ -611,8 +613,8 @@ func main() {
 		})
 	})
 	e.GET("/api/users/:id", func(c echo.Context) error {
-		txn := app.StartTransaction("/api/users/:id", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/api/users/:id", c.Response(), c.Request())
+		//defer txn.End()
 		var user User
 		if err := db.QueryRow("SELECT id, nickname FROM users WHERE id = ?", c.Param("id")).Scan(&user.ID, &user.Nickname); err != nil {
 			return err
@@ -747,8 +749,8 @@ func main() {
 		})
 	}, loginRequired)
 	e.POST("/api/actions/login", func(c echo.Context) error {
-		txn := app.StartTransaction("/api/actions/login", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/api/actions/login", c.Response(), c.Request())
+		//defer txn.End()
 		var params struct {
 			LoginName string `json:"login_name"`
 			Password  string `json:"password"`
@@ -779,14 +781,14 @@ func main() {
 		return c.JSON(200, user)
 	})
 	e.POST("/api/actions/logout", func(c echo.Context) error {
-		txn := app.StartTransaction("/api/actions/logout", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/api/actions/logout", c.Response(), c.Request())
+		//defer txn.End()
 		sessDeleteUserID(c)
 		return c.NoContent(204)
 	}, loginRequired)
 	e.GET("/api/events", func(c echo.Context) error {
-		txn := app.StartTransaction("/api/events", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/api/events", c.Response(), c.Request())
+		//defer txn.End()
 		events, err := getEvents(true)
 		if err != nil {
 			return err
@@ -797,8 +799,8 @@ func main() {
 		return c.JSON(200, events)
 	})
 	e.GET("/api/events/:id", func(c echo.Context) error {
-		txn := app.StartTransaction("/api/events/:id", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/api/events/:id", c.Response(), c.Request())
+		//defer txn.End()
 		eventID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			return resError(c, "not_found", 404)
@@ -821,8 +823,8 @@ func main() {
 		return c.JSON(200, sanitizeEvent(event))
 	})
 	e.POST("/api/events/:id/actions/reserve", func(c echo.Context) error {
-		txn := app.StartTransaction("/api/events/:id/actions/reserve", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/api/events/:id/actions/reserve", c.Response(), c.Request())
+		//defer txn.End()
 		eventID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			return resError(c, "not_found", 404)
@@ -930,8 +932,8 @@ func main() {
 		return resError(c, "sold_out", 409)
 	}, loginRequired)
 	e.DELETE("/api/events/:id/sheets/:rank/:num/reservation", func(c echo.Context) error {
-		txn := app.StartTransaction("/api/events/:id/sheets/:rank/:num/reservation", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/api/events/:id/sheets/:rank/:num/reservation", c.Response(), c.Request())
+		//defer txn.End()
 		eventID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			return resError(c, "not_found", 404)
@@ -996,8 +998,8 @@ func main() {
 		return c.NoContent(204)
 	}, loginRequired)
 	e.GET("/admin/", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin", c.Response(), c.Request())
+		//defer txn.End()
 		var events []*Event
 		administrator := c.Get("administrator")
 		if administrator != nil {
@@ -1013,8 +1015,8 @@ func main() {
 		})
 	}, fillinAdministrator)
 	e.POST("/admin/api/actions/login", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin/api/actions/login", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin/api/actions/login", c.Response(), c.Request())
+		//defer txn.End()
 		var params struct {
 			LoginName string `json:"login_name"`
 			Password  string `json:"password"`
@@ -1045,14 +1047,14 @@ func main() {
 		return c.JSON(200, administrator)
 	})
 	e.POST("/admin/api/actions/logout", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin/api/actions/logout", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin/api/actions/logout", c.Response(), c.Request())
+		//defer txn.End()
 		sessDeleteAdministratorID(c)
 		return c.NoContent(204)
 	}, adminLoginRequired)
 	e.GET("/admin/api/events", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin/api/events", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin/api/events", c.Response(), c.Request())
+		//defer txn.End()
 		events, err := getEvents(true)
 		if err != nil {
 			return err
@@ -1060,8 +1062,8 @@ func main() {
 		return c.JSON(200, events)
 	}, adminLoginRequired)
 	e.POST("/admin/api/events", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin/api/events", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin/api/events", c.Response(), c.Request())
+		//defer txn.End()
 		var params struct {
 			Title  string `json:"title"`
 			Public bool   `json:"public"`
@@ -1095,8 +1097,8 @@ func main() {
 		return c.JSON(200, event)
 	}, adminLoginRequired)
 	e.GET("/admin/api/events/:id", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin/api/events/:id", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin/api/events/:id", c.Response(), c.Request())
+		//defer txn.End()
 		eventID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			return resError(c, "not_found", 404)
@@ -1111,8 +1113,8 @@ func main() {
 		return c.JSON(200, event)
 	}, adminLoginRequired)
 	e.POST("/admin/api/events/:id/actions/edit", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin/api/events/:id/actions/edit", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin/api/events/:id/actions/edit", c.Response(), c.Request())
+		//defer txn.End()
 		eventID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			return resError(c, "not_found", 404)
@@ -1161,8 +1163,8 @@ func main() {
 		return nil
 	}, adminLoginRequired)
 	e.GET("/admin/api/reports/events/:id/sales", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin/api/reports/events/:id/sales", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin/api/reports/events/:id/sales", c.Response(), c.Request())
+		//defer txn.End()
 		eventID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			return resError(c, "not_found", 404)
@@ -1204,8 +1206,8 @@ func main() {
 	}, adminLoginRequired)
 
 	e.GET("/admin/api/reports/sales", func(c echo.Context) error {
-		txn := app.StartTransaction("/admin/api/reports/sales", c.Response(), c.Request())
-		defer txn.End()
+		//txn := app.StartTransaction("/admin/api/reports/sales", c.Response(), c.Request())
+		//defer txn.End()
 		rows, err := db.Query("select r.*, e.id as event_id, e.price as event_price from reservations r inner join events e on e.id = r.event_id order by reserved_at asc for update")
 		if err != nil {
 			return err
