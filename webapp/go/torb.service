@@ -2,7 +2,7 @@
 Description = torb service
 
 [Service]
-ExecStart = cd /home/ec2-user/isucon8-qualify/webapp/go && ./run_local.sh
+ExecStart = cd /home/ec2-user/isucon8-qualify/webapp/go; ./run_local.sh
 Restart = always
 Type = simple
 
